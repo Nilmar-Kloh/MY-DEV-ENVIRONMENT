@@ -1,0 +1,18 @@
+# --------------------------------------------------
+# MY-DEV-ENVIRONMENT
+# Shell Configuration
+# --------------------------------------------------
+export DEV_ENV_HOME="$HOME/Code/MY-DEV-ENVIRONMENT"
+
+# Environment
+source "$DEV_ENV_HOME/configs/shell/exports.zsh"
+
+# Aliases
+source "$DEV_ENV_HOME/configs/shell/aliases.zsh"
+
+# Functions
+source "$DEV_ENV_HOME/configs/shell/functions.zsh"
+
+# Starship
+export STARSHIP_CONFIG="$DEV_ENV_HOME/configs/starship/starship.toml"
+eval "$(starship init zsh)"

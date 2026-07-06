@@ -1,0 +1,11 @@
+[user]
+  name = Nilmar
+  email = nilmar@example.com
+
+[core]
+  editor = code --wait
+
+[alias]
+  st = status
+  co = checkout
+  br = branch
