@@ -50,20 +50,22 @@ One that thing that is not included and is a huge part of my personal and profes
 
 I use obsidian with 1 folder that houses all notes and another folder with Kanban boards that house links by their areas and normal cards that are either activities or small notes, in my day to day I usually keep them all open in tabs and cycle through.
 
+#### Folder Structure
+
+```text
 Obsidian_Vault
 ├── Kanban Cards/
-│   ├── All individual notes live here/
-├── Key Boards/
-│   ├── 01 - Task Manager/
-│   ├── 02 - Personal/
-│   ├── 03 - Links/
-│   ├── 04 - Temporary drafts/
-│   └── 05 - Media-Technology Studies/
-│   └── 05 - Media-Technology Studies/
-│   └── 06 - System Architecture & Design/
-│   └── 07 - Homelab/
-
-Plugins:
+│   └── All individual notes live here/
+└── Key Boards/
+    ├── 01 - Task Manager/
+    ├── 02 - Personal/
+    ├── 03 - Links/
+    ├── 04 - Temporary drafts/
+    ├── 05 - Media-Technology Studies/
+    ├── 06 - System Architecture & Design/
+    └── 07 - Homelab/
+```
+#### Plugins:
 - Advanced Canvas
 - Auto Card Link
 - Calendar
@@ -77,7 +79,7 @@ Plugins:
 - Omnisearch
 - Style Settings
 
-Theme:
+#### Theme:
 AnuPpuccin dark mode + Rainbow folders in style settings.
 
 
