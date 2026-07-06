@@ -1,6 +1,6 @@
 {
   "editor.fontFamily": "JetBrains Mono",
-  "editor.fontLigatures": true,
+  "editor.fontLigatures": false,
   "editor.fontSize": 14,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
