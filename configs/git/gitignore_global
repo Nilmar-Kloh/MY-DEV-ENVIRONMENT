@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/settings.local.json
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Temporary
+*.tmp
+*.swp

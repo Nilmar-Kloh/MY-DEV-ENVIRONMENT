@@ -1,11 +1,36 @@
 [user]
-  name = Nilmar
-  email = nilmar@example.com
+  name = Your Name
+  email = your@email.com
+
+[init]
+  defaultBranch = main
+
+[pull]
+  rebase = false
+
+[push]
+  autoSetupRemote = true
+
+[fetch]
+  prune = true
 
 [core]
   editor = code --wait
+  autocrlf = input
+  excludesfile = ~/.gitignore_global
+
+[color]
+  ui = auto
+
+[rerere]
+  enabled = true
+
+[rebase]
+  autosquash = true
 
 [alias]
   st = status
   co = checkout
   br = branch
+  ci = commit
+  lg = log --graph --decorate --oneline --all
