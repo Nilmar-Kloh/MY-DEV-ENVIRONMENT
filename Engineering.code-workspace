@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": "../AI-MEDIA-PLATFORM"
+    },
+    {
+      "path": "../MY-DEV-ENVIRONMENT"
+    },
+    {
+      "path": "../AI-AUTOMATIONS-PLATFORM"
+    },
+    {
+      "path": "../DAVINCI_RESOLVE_MCP"
+    }
+  ],
+  "settings": {
+    "git.autoRepositoryDetection": "subFolders",
+    "git.repositoryScanMaxDepth": 5
+  }
+}
