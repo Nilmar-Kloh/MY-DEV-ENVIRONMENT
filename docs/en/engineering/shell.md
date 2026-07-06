@@ -37,6 +37,4 @@ configs/
     settings.json
 ```
 
-Even simple placeholder files are useful to establish structure.
-
 ---
