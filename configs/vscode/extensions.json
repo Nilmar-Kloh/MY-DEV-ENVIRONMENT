@@ -11,6 +11,7 @@
     "davidanson.vscode-markdownlint",
     "streetsidesoftware.code-spell-checker",
     "tamasfe.even-better-toml",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    "mhutchie.git-graph"
   ]
 }
