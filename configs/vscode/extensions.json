@@ -12,6 +12,9 @@
     "streetsidesoftware.code-spell-checker",
     "tamasfe.even-better-toml",
     "redhat.vscode-yaml",
-    "mhutchie.git-graph"
+    "mhutchie.git-graph",
+    "ms-ossdata.vscode-postgresql",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg"
   ]
 }

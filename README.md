@@ -44,6 +44,7 @@ One that thing that is not included and is a huge part of my personal and profes
 - Python toolchain
 - Docker tooling
 - AI development tools
+- Database development tools
 - Bootstrap scripts
 
 ## Obsidian:

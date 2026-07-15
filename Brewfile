@@ -14,3 +14,4 @@ brew "tmux"
 brew "uv"
 
 cask "iterm2"
+cask "dbeaver-community"
