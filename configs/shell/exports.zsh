@@ -12,7 +12,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # --------------------------------------------------
 # Custom PATH
 # --------------------------------------------------
-export PATH="$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$HOME/go/bin:$PATH"
 
 # --------------------------------------------------
 # History

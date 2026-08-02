@@ -41,6 +41,7 @@ One that thing that is not included and is a huge part of my personal and profes
 - Git configuration
 - Terminal customization
 - VSCode configuration
+- Go toolchain and language tooling
 - Python toolchain
 - Docker tooling
 - AI development tools

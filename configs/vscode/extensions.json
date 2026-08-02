@@ -15,6 +15,9 @@
     "mhutchie.git-graph",
     "ms-ossdata.vscode-postgresql",
     "mtxr.sqltools",
-    "mtxr.sqltools-driver-pg"
+    "mtxr.sqltools-driver-pg",
+    "golang.Go",
+    "humao.rest-client",
+    "alexcvzz.vscode-sqlite"
   ]
 }
