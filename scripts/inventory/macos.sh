@@ -254,34 +254,43 @@ section "languages"
 } | tee "$RAW_DIR/languages.txt"
 
 # --------------------------------------------------
-# Git configuration (safe subset — no signing key contents)
+# Git configuration (structural summary — values redacted for keys
+# that may carry personal/identity data; the repo's own gitconfig is
+# the source of truth for the safe subset).
 # --------------------------------------------------
 section "git"
 if have git; then
+  redacted_value() {
+    # Print <REDACTED> if the config key has a value, empty otherwise.
+    local v
+    v="$(git config --global "$1" 2>/dev/null || true)"
+    [[ -n "$v" ]] && printf '%s' "<REDACTED>"
+  }
   {
-    echo "# Git (sanitized)"
+    echo "# Git (structural summary)"
     echo
-    echo "## Identity"
-    git config --global user.name 2>/dev/null | sed 's/^/- user.name: /' || true
-    git config --global user.email 2>/dev/null | sed 's/^/- user.email: /' || true
-    git config --global user.signingkey 2>/dev/null | sed 's/^/- user.signingkey: /' || true
+    echo "## Identity (values redacted)"
+    echo "- user.name: $(redacted_value user.name)"
+    echo "- user.email: $(redacted_value user.email)"
+    echo "- user.signingkey: $(redacted_value user.signingkey)"
     echo
     echo "## Behavior"
-    git config --global init.defaultBranch 2>/dev/null | sed 's/^/- init.defaultBranch: /' || true
-    git config --global pull.rebase 2>/dev/null | sed 's/^/- pull.rebase: /' || true
-    git config --global push.autoSetupRemote 2>/dev/null | sed 's/^/- push.autoSetupRemote: /' || true
-    git config --global fetch.prune 2>/dev/null | sed 's/^/- fetch.prune: /' || true
-    git config --global core.autocrlf 2>/dev/null | sed 's/^/- core.autocrlf: /' || true
-    git config --global core.editor 2>/dev/null | sed 's/^/- core.editor: /' || true
-    git config --global core.excludesfile 2>/dev/null | sed 's/^/- core.excludesfile: /' || true
-    git config --global rerere.enabled 2>/dev/null | sed 's/^/- rerere.enabled: /' || true
-    git config --global rebase.autosquash 2>/dev/null | sed 's/^/- rebase.autosquash: /' || true
-    git config --global color.ui 2>/dev/null | sed 's/^/- color.ui: /' || true
-    git config --global credential.helper 2>/dev/null | sed 's/^/- credential.helper: /' || true
-    git config --global gpg.format 2>/dev/null | sed 's/^/- gpg.format: /' || true
+    echo "- init.defaultBranch: $(redacted_value init.defaultBranch)"
+    echo "- pull.rebase: $(redacted_value pull.rebase)"
+    echo "- push.autoSetupRemote: $(redacted_value push.autoSetupRemote)"
+    echo "- fetch.prune: $(redacted_value fetch.prune)"
+    echo "- core.autocrlf: $(redacted_value core.autocrlf)"
+    echo "- core.editor: $(redacted_value core.editor)"
+    echo "- core.excludesfile: $(redacted_value core.excludesfile)"
+    echo "- rerere.enabled: $(redacted_value rerere.enabled)"
+    echo "- rebase.autosquash: $(redacted_value rebase.autosquash)"
+    echo "- color.ui: $(redacted_value color.ui)"
+    echo "- credential.helper: $(redacted_value credential.helper)"
+    echo "- gpg.format: $(redacted_value gpg.format)"
     echo
-    echo "## Aliases"
-    git config --global --get-regexp '^alias\.' 2>/dev/null | sed 's/^/- /' || true
+    echo "## Aliases (count only)"
+    alias_count="$(git config --global --get-regexp '^alias\.' 2>/dev/null | wc -l | tr -d '[:space:]')"
+    echo "- aliases defined: $alias_count"
     echo
     echo "## Version"
     git --version
@@ -292,49 +301,49 @@ else
 fi
 
 # --------------------------------------------------
-# SSH (sanitized — hostnames only, NEVER key contents)
+# SSH (structural summary ONLY — hostnames, IPs, key fingerprints,
+# usernames, filenames that imply key types, and SSH config contents
+# are NEVER written anywhere, even to inventory/raw/. This is the
+# strictest setting on purpose. See ~/.ssh/ on the source machine for
+# full detail.
 # --------------------------------------------------
 section "ssh"
 if [[ -d "$HOME/.ssh" ]]; then
-  {
-    echo "# SSH (sanitized)"
-    echo
-    echo "## Files present (filenames only)"
-    if have ls; then
-      ls -1 "$HOME/.ssh" 2>/dev/null | sed 's/^/- /' || true
-    fi
-    echo
-    echo "## Known hosts (hostnames only — entries truncated)"
-    if [[ -f "$HOME/.ssh/known_hosts" ]]; then
-      awk '{
-        for (i=1; i<=NF; i++) {
-          if ($i ~ /^[a-zA-Z0-9.-]+,?$/) { print "- " $i; next }
-        }
-      }' "$HOME/.ssh/known_hosts" 2>/dev/null | sort -u | head -n 100
-    fi
-    echo
-    echo "## Config (sanitized — values removed, keys shown)"
-    if [[ -f "$HOME/.ssh/config" ]]; then
-      # Print directive keys, never values. Comments preserved.
-      awk '
-        /^[[:space:]]*#/ || /^[[:space:]]*$/ { print; next }
-        {
-          key=$1
-          sub(/[ \t].*$/, "", key)
-          print key " <REDACTED>"
-        }
-      ' "$HOME/.ssh/config"
-    fi
-    echo
-    echo "## ssh-agent status"
-    if have ssh-add; then
-      ssh-add -l 2>&1 | head -n 5 | sed 's/^/- /' || echo "- (no agent or no keys)"
-    fi
-  } > "$RAW_DIR/ssh.md"
-  cat "$RAW_DIR/ssh.md"
+  ssh_present=yes
+  ssh_file_count=$(find "$HOME/.ssh" -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d '[:space:]')
+  ssh_key_count=$(find "$HOME/.ssh" -maxdepth 1 -type f \
+      ! -name '*.pub' \
+      ! -name 'known_hosts*' \
+      ! -name 'config' \
+      ! -name 'environment' \
+      ! -name 'rc' \
+      2>/dev/null | wc -l | tr -d '[:space:]')
+  ssh_pub_count=$(find "$HOME/.ssh" -maxdepth 1 -type f -name '*.pub' 2>/dev/null | wc -l | tr -d '[:space:]')
+  if [[ -f "$HOME/.ssh/config" ]]; then has_config=yes; else has_config=no; fi
+  if [[ -f "$HOME/.ssh/known_hosts" ]]; then has_known_hosts=yes; else has_known_hosts=no; fi
 else
-  echo "No ~/.ssh directory."
+  ssh_present=no
+  ssh_file_count=0
+  ssh_key_count=0
+  ssh_pub_count=0
+  has_config=no
+  has_known_hosts=no
 fi
+
+{
+  echo "# SSH (structural summary)"
+  echo
+  echo "- ~/.ssh/ exists: $ssh_present"
+  echo "- non-key files in ~/.ssh/: $ssh_file_count"
+  echo "- private keys present: $ssh_key_count"
+  echo "- public keys present: $ssh_pub_count"
+  echo "- ssh config file: $has_config"
+  echo "- known_hosts file: $has_known_hosts"
+  echo
+  echo "(No hostnames, IPs, fingerprints, file sizes, or usernames are"
+  echo "captured. See ~/.ssh/ on the source machine for full detail.)"
+} > "$RAW_DIR/ssh.md"
+cat "$RAW_DIR/ssh.md"
 
 # --------------------------------------------------
 # Shell configuration references (paths only)
@@ -346,19 +355,17 @@ section "shell"
   for f in .zshrc .zprofile .zshenv .bashrc .bash_profile .profile \
            .aliases .functions .exports .path; do
     if [[ -f "$HOME/$f" ]]; then
-      echo "- ~/f (exists, $(wc -c < "$HOME/$f" | tr -d ' ') bytes)"
+      bytes="$(wc -c < "$HOME/$f" | tr -d '[:space:]')"
+      echo "- ~/$f (exists, ${bytes} bytes)"
     fi
   done
-  if [[ -L "$HOME/.zshrc" ]]; then
-    echo "- ~/.zshrc is a symlink -> $(readlink "$HOME/.zshrc")"
-  fi
-  if [[ -L "$HOME/.tmux.conf" ]]; then
-    echo "- ~/.tmux.conf is a symlink -> $(readlink "$HOME/.tmux.conf")"
-  fi
-  if [[ -L "$HOME/.gitconfig" ]]; then
-    echo "- ~/.gitconfig is a symlink -> $(readlink "$HOME/.gitconfig")"
-  fi
-} | sed "s|~/f|~/$f|g" | tee "$RAW_DIR/shell-files.txt"
+  for f in .zshrc .tmux.conf .gitconfig .config/starship.toml; do
+    if [[ -L "$HOME/$f" ]]; then
+      target="$(readlink "$HOME/$f")"
+      echo "- ~/$f is a symlink -> $target"
+    fi
+  done
+} | tee "$RAW_DIR/shell-files.txt"
 
 # --------------------------------------------------
 # Environment variable NAMES only

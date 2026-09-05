@@ -186,42 +186,44 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 }
 
 # --------------------------------------------------
-# SSH (sanitized — never key contents)
+# SSH (structural summary ONLY — no hostnames, IPs, fingerprints,
+# usernames, file sizes that fingerprint keys, or config contents)
 # --------------------------------------------------
 Section "ssh"
 $sshDir = Join-Path $env:USERPROFILE '.ssh'
 if (Test-Path $sshDir) {
-    $sshBuf = [System.Text.StringBuilder]::new()
-    [void]$sshBuf.AppendLine("# SSH (sanitized)")
-    [void]$sshBuf.AppendLine()
-    [void]$sshBuf.AppendLine("## Files present (filenames only)")
-    Get-ChildItem -Path $sshDir -File | ForEach-Object {
-        [void]$sshBuf.AppendLine("- $($_.Name) ($($_.Length) bytes)")
-    }
-    [void]$sshBuf.AppendLine()
-    $cfg = Join-Path $sshDir 'config'
-    if (Test-Path $cfg) {
-        [void]$sshBuf.AppendLine("## Config (directive keys only, values redacted)")
-        Get-Content $cfg | ForEach-Object {
-            if ($_ -match '^\s*#' -or $_ -match '^\s*$') { $line = $_ }
-            else {
-                $key = ($_ -split '\s+',2)[0]
-                $line = "$key <REDACTED>"
-            }
-            [void]$sshBuf.AppendLine($line)
-        }
-    }
-    [void]$sshBuf.AppendLine()
-    [void]$sshBuf.AppendLine("## ssh-agent status (first 5 lines)")
-    try {
-        ssh-add -l 2>&1 | Select-Object -First 5 | ForEach-Object {
-            [void]$sshBuf.AppendLine("- $_")
-        }
-    } catch {
-        [void]$sshBuf.AppendLine("- (no agent or no keys)")
-    }
-    $sshBuf.ToString() | Out-File "$RawDir/ssh.md" -Encoding utf8
+    $files = Get-ChildItem -Path $sshDir -File -ErrorAction SilentlyContinue
+    $privCount = ($files | Where-Object {
+        $_.Name -notmatch '\.pub$' -and
+        $_.Name -notmatch '^known_hosts' -and
+        $_.Name -ne 'config' -and
+        $_.Name -ne 'environment' -and
+        $_.Name -ne 'rc'
+    }).Count
+    $pubCount = ($files | Where-Object { $_.Name -match '\.pub$' }).Count
+    $hasConfig = (Test-Path (Join-Path $sshDir 'config'))
+    $hasKnownHosts = (Test-Path (Join-Path $sshDir 'known_hosts'))
+} else {
+    $files = @()
+    $privCount = 0
+    $pubCount = 0
+    $hasConfig = $false
+    $hasKnownHosts = $false
 }
+
+$sshBuf = [System.Text.StringBuilder]::new()
+[void]$sshBuf.AppendLine("# SSH (structural summary)")
+[void]$sshBuf.AppendLine()
+[void]$sshBuf.AppendLine("- ~/.ssh/ exists: $([bool](Test-Path $sshDir))")
+[void]$sshBuf.AppendLine("- non-key files in ~/.ssh/: $($files.Count - $privCount - $pubCount)")
+[void]$sshBuf.AppendLine("- private keys present: $privCount")
+[void]$sshBuf.AppendLine("- public keys present: $pubCount")
+[void]$sshBuf.AppendLine("- ssh config file: $hasConfig")
+[void]$sshBuf.AppendLine("- known_hosts file: $hasKnownHosts")
+[void]$sshBuf.AppendLine()
+[void]$sshBuf.AppendLine("(No hostnames, IPs, fingerprints, file sizes, or usernames are")
+[void]$sshBuf.AppendLine("captured. See ~/.ssh/ on the source machine for full detail.)")
+$sshBuf.ToString() | Out-File "$RawDir/ssh.md" -Encoding utf8
 
 # --------------------------------------------------
 # WSL distros (if installed)

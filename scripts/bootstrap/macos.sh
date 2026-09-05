@@ -9,24 +9,63 @@
 # Tier 2/3 automation per the project plan.
 #
 # Usage
-#   bash scripts/bootstrap/macos.sh            # safe: brew bundle + symlinks
-#   bash scripts/bootstrap/macos.sh --skip-brew # symlinks only (offline / CI)
+#   bash scripts/bootstrap/macos.sh                # default safe mode
+#   bash scripts/bootstrap/macos.sh --skip-brew    # symlinks only
+#   bash scripts/bootstrap/macos.sh --dry-run       # preview, no changes
+#   bash scripts/bootstrap/macos.sh --force         # back up + overwrite
+#                                                 # existing real files
 #
 # Side effects
-#   - Installs/updates packages from the Brewfile.
-#   - Creates ~/.zshrc, ~/.gitconfig, ~/.gitignore_global, ~/.tmux.conf
-#     symlinks pointing into this repo.
+#   - Installs/updates packages from the Brewfile (unless --skip-brew).
+#   - Creates symlinks for ~/.gitconfig, ~/.gitignore_global,
+#     ~/.tmux.conf, ~/.config/starship.toml,
+#     ~/Library/Application Support/Code/User/{settings,keybindings}.json.
 #   - Does NOT touch SSH keys, Keychain, or app data.
+#   - Does NOT modify ~/.zshrc. The user is expected to symlink it
+#     manually if desired (see configs/shell/zshrc).
+#
+# Safety
+#   By default, an existing non-symlink file at the destination causes
+#   that link to be SKIPPED. Use --force to back up the existing file
+#   to <dst>.backup-<UTC timestamp> and replace it. Use --dry-run to
+#   see what would happen without making any changes.
 # --------------------------------------------------
 
-set -euo pipefail
+set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 SKIP_BREW=0
-[[ "${1:-}" == "--skip-brew" ]] && SKIP_BREW=1
+FORCE=0
+DRY_RUN=0
+for arg in "$@"; do
+  case "$arg" in
+    --skip-brew) SKIP_BREW=1 ;;
+    --force)     FORCE=1 ;;
+    --dry-run)   DRY_RUN=1 ;;
+    --help|-h)
+      sed -n '2,30p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "!! Unknown argument: $arg" >&2
+      echo "   Use --help to see valid options." >&2
+      exit 2
+      ;;
+  esac
+done
 
 echo "==> MY-DEV-ENVIRONMENT macOS bootstrap"
 echo "    repo: $REPO_ROOT"
+[[ "$DRY_RUN" -eq 1 ]] && echo "    MODE: dry-run (no changes)"
+[[ "$FORCE"   -eq 1 ]] && echo "    MODE: force (existing files backed up + replaced)"
+
+run() {
+  # Echo a command and optionally execute it.
+  local desc="$1"; shift
+  echo "    $*  ($desc)"
+  [[ "$DRY_RUN" -eq 0 ]] && eval "$@"
+}
 
 # --------------------------------------------------
 # Homebrew + Brewfile
@@ -38,59 +77,62 @@ if [[ "$SKIP_BREW" -eq 0 ]]; then
     exit 1
   fi
   echo "==> brew bundle (Brewfile)"
-  brew bundle --file="$REPO_ROOT/Brewfile"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "    would run: brew bundle --file=\"$REPO_ROOT/Brewfile\""
+  else
+    brew bundle --file="$REPO_ROOT/Brewfile"
+  fi
+else
+  echo "==> skipping Homebrew (--skip-brew)"
 fi
 
 # --------------------------------------------------
 # Dotfile symlinks
-# By default, an existing non-symlink file at the destination is treated
-# as a HARD STOP. Pass --force to back up and replace. This protects
-# real user files from being silently overwritten.
+#
+# Default behavior:
+#   - existing symlink pointing elsewhere → replace
+#   - existing real file → SKIP unless --force (in which case: back up + replace)
+#   - missing → create
 # --------------------------------------------------
-FORCE=0
-for arg in "$@"; do
-  [[ "$arg" == "--force" ]] && FORCE=1
-done
-
 symlink() {
   local src="$1"
   local dst="$2"
-  if [[ -e "$dst" && ! -L "$dst" ]]; then
+  if [[ -L "$dst" ]]; then
+    run "replace existing symlink" "ln -sf \"$src\" \"$dst\""
+    return
+  fi
+  if [[ -e "$dst" ]]; then
     if [[ "$FORCE" -eq 1 ]]; then
       local backup="${dst}.backup-$(date -u +%Y%m%dT%H%M%SZ)"
-      echo "!! $dst exists and is not a symlink. Backing up to $backup"
-      mv "$dst" "$backup"
+      run "back up to $backup and link" "mv \"$dst\" \"$backup\" && ln -sf \"$src\" \"$dst\""
     else
-      echo "!! SKIP: $dst exists and is not a symlink. Pass --force to overwrite."
-      return 0
+      echo "    SKIP: $dst exists and is not a symlink. Pass --force to overwrite."
     fi
+    return
   fi
-  ln -sf "$src" "$dst"
-  echo "    linked $dst -> $src"
+  run "create" "ln -sf \"$src\" \"$dst\""
 }
 
 echo "==> dotfile symlinks"
 symlink "$REPO_ROOT/configs/git/gitconfig"        "$HOME/.gitconfig"
 symlink "$REPO_ROOT/configs/git/gitignore_global" "$HOME/.gitignore_global"
+symlink "$REPO_ROOT/configs/git/gitconfig.macos"  "$HOME/.gitconfig.local"
 symlink "$REPO_ROOT/configs/tmux/tmux.conf"        "$HOME/.tmux.conf"
 
-# Shell config: source-from-repo pattern (no symlink of .zshrc itself).
-SHELL_RC="$HOME/.zshrc"
-if [[ -e "$SHELL_RC" && ! "$SHELL_RC" -ef "$REPO_ROOT/configs/shell/zshrc" ]]; then
-  if ! grep -q "MY-DEV-ENVIRONMENT" "$SHELL_RC"; then
-    echo "==> appending MY-DEV-ENVIRONMENT source line to ~/.zshrc"
-    cat >> "$SHELL_RC" <<'EOF'
-
-# MY-DEV-ENVIRONMENT
-export DEV_ENV_HOME="$HOME/Code/MY-DEV-ENVIRONMENT"
-[[ -f "$DEV_ENV_HOME/configs/shell/zshrc" ]] && source "$DEV_ENV_HOME/configs/shell/zshrc"
-EOF
-  fi
-fi
-
-# Starship: the config file is referenced via $STARSHIP_CONFIG in zshrc.
 mkdir -p "$HOME/.config"
 symlink "$REPO_ROOT/configs/starship/starship.toml" "$HOME/.config/starship.toml"
+
+# --------------------------------------------------
+# ~/.zshrc
+#
+# This script does NOT modify ~/.zshrc. Two acceptable patterns:
+#   (a) Symlink it to the repo's zshrc:
+#         ln -sf "$REPO_ROOT/configs/shell/zshrc" ~/.zshrc
+#   (b) Source-from-repo by appending the include line:
+#         echo 'source "$HOME/Code/MY-DEV-ENVIRONMENT/configs/shell/zshrc"' >> ~/.zshrc
+# The repo's own zshrc already handles aliases/exports/functions/starship.
+# --------------------------------------------------
+echo "==> ~/.zshrc: no change. See header comment in scripts/bootstrap/macos.sh."
 
 # --------------------------------------------------
 # VS Code (macOS path)
@@ -103,7 +145,11 @@ symlink "$REPO_ROOT/configs/vscode/keybindings.json" "$VSCODE_USER/keybindings.j
 # --------------------------------------------------
 # Validation
 # --------------------------------------------------
-echo "==> validating"
-"$REPO_ROOT/scripts/inventory/validate.sh" --required-only || true
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "==> skipping validation in dry-run mode."
+else
+  echo "==> validating"
+  "$REPO_ROOT/scripts/inventory/validate.sh" --profile mac || true
+fi
 
 echo "==> done."
