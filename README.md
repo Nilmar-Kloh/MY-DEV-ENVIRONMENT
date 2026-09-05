@@ -149,6 +149,7 @@ checks only tools expected on every host.
 - [`docs/migration/pre-return-mac-checklist.md`](docs/migration/pre-return-mac-checklist.md) — before handing back the MacBook
 - [`docs/migration/windows-arrival-checklist.md`](docs/migration/windows-arrival-checklist.md) — first-day procedure on the Dell
 - [`docs/migration/mac-to-windows-matrix.md`](docs/migration/mac-to-windows-matrix.md) — per-tool mapping
+- [`docs/migration/software-compatibility-matrix.md`](docs/migration/software-compatibility-matrix.md) — per-application Windows/Debian/Omarchy compatibility
 
 ## Architectural decisions
 
