@@ -1,4 +1,100 @@
-# Ignore macOS and node artifacts
+# --------------------------------------------------
+# MY-DEV-ENVIRONMENT .gitignore
+#
+# This file protects credentials, secrets, and machine-local
+# state from being accidentally committed. It does NOT protect
+# reusable configuration — that belongs in configs/.
+# --------------------------------------------------
+
+# OS / editor artifacts
 .DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/settings.local.json
+
+# Node (in case any tooling sneaks in)
 node_modules/
+
+# Generic environment files
 .env
+.env.*
+!.env.example
+
+# --------------------------------------------------
+# SSH — keys must NEVER be committed
+# --------------------------------------------------
+*.pem
+*.key
+*.pub
+!configs/**/*.pub
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# --------------------------------------------------
+# Cloud credentials
+# --------------------------------------------------
+.aws/
+.azure/
+.gcp/
+.gcloud/
+.config/gcloud/
+
+# --------------------------------------------------
+# Kubernetes
+# --------------------------------------------------
+.kube/config
+*.kubeconfig
+
+# --------------------------------------------------
+# Docker / containers
+# --------------------------------------------------
+.docker/config.json
+
+# --------------------------------------------------
+# Terraform / IaC local state (not configuration)
+# --------------------------------------------------
+.terraform/
+.terraform.lock.hcl.bak
+*.tfstate
+*.tfstate.*
+.terraform.d/
+
+# --------------------------------------------------
+# macOS application state
+# --------------------------------------------------
+Library/
+Application Support/
+
+# --------------------------------------------------
+# Shell history — sensitive commands, never commit
+# --------------------------------------------------
+.zsh_history
+.bash_history
+.psreadline/
+
+# --------------------------------------------------
+# Python (local, not source-of-truth environments)
+# --------------------------------------------------
+__pycache__/
+*.pyc
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+
+# --------------------------------------------------
+# Go (local build artifacts)
+# --------------------------------------------------
+*.test
+*.out
+
+# --------------------------------------------------
+# Generated inventory artifacts (kept locally)
+# --------------------------------------------------
+inventory/raw/
+inventory/*.local.md
