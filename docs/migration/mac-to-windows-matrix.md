@@ -21,15 +21,17 @@ Symbols:
 | Starship prompt | prompt | Starship prompt (same binary) | 🐧 | ✅ |
 | iTerm2 | terminal emulator | Windows Terminal | 🪟 | ⚖️ |
 | tmux | multiplexer | tmux in WSL2 | 🐧 | ✅ |
-| eza | modern ls | `eza` (winget has no id; install via scoop or download from upstream) | 🐧 | 🟡 |
+| eza | modern ls | `eza` in WSL2 (distro package or upstream release at eza.rocks) | 🐧 | 🟡 |
 | bat | modern cat | `bat` | 🐧 | 🟡 |
 | fd | modern find | `fd` | 🐧 | 🟡 |
 | ripgrep | modern grep | `rg` | 🐧 | 🟡 |
 | fzf | fuzzy finder | `fzf` | 🐧 | ✅ |
 | jq | JSON CLI | `jq` | 🐧 | ✅ |
 
-`configs/shell/*` → `configs/shell/*` (adapt `$DEV_ENV_HOME` and remove
-the Homebrew line).
+`configs/shell/*` carries over to WSL2 zsh. `$DEV_ENV_HOME` must point
+at the WSL2 checkout (`~/src/MY-DEV-ENVIRONMENT`); the Homebrew block in
+`configs/shell/exports.zsh` is already guarded and is a no-op without
+Homebrew installed.
 
 `configs/tmux/tmux.conf` → same file, symlinked into WSL.
 
@@ -46,9 +48,13 @@ the Homebrew line).
 
 ## Languages
 
+Python, Go, and Node/npm are detected on the Mac. Ruff, mypy/pyright,
+pipx, and pnpm are **absent** there (`[ABSENT][TARGET]`) — wanted on
+the Dell, not part of the outgoing environment.
+
 | macOS | Role | Windows equivalent | Where | Status |
 | --- | --- | --- | --- | --- |
-| `python@3.14` (brew) | Python | `uv` (manages its own Python) | 🐧 | ⚖️ |
+| `python@<version>` (brew) | Python | `uv` (manages its own Python) | 🐧 | ⚖️ |
 | `uv` | Python toolchain | `uv` | 🐧 | ✅ |
 | `node` (brew) | Node runtime | winget `OpenJS.NodeJS.LTS` or nvm | 🐧 | 🟡 |
 | `go` (brew) | Go | go.dev tarball | 🐧 | ✅ |
@@ -73,14 +79,18 @@ See `docs/engineering/docker.md` for fallbacks.
 
 ## Infrastructure
 
+The live Mac inventory reports kubectl, helm, k9s, terraform, and tofu
+as **absent**. They are `[ABSENT][TARGET]` — wanted on the Dell, not
+part of the outgoing Mac environment.
+
 | macOS | Role | Windows equivalent | Where | Status |
 | --- | --- | --- | --- | --- |
-| kubectl | k8s CLI | upstream binary or `brew` (Linuxbrew) | 🐧 | ✅ |
+| kubectl | k8s CLI | upstream binary or distro package | 🐧 | ✅ |
 | helm | k8s pkg mgr | upstream script | 🐧 | ✅ |
 | k9s | k8s TUI | upstream release | 🐧 | ✅ |
 | terraform | IaC | upstream zip | 🐧 | ✅ |
 | tofu | IaC fork | upstream installer | 🐧 | ✅ |
-| ansible | config mgmt | `apt install ansible` or `brew install ansible` | 🐧 | ✅ |
+| ansible | config mgmt | distro package manager (`apt install ansible`) | 🐧 | ✅ |
 
 `~/.kube/config`, `~/.aws/credentials`, etc. are NEVER migrated. See
 `docs/secrets-policy.md`.
@@ -106,8 +116,8 @@ See `docs/engineering/docker.md` for fallbacks.
 
 | macOS | Role | Windows equivalent | Where | Status |
 | --- | --- | --- | --- | --- |
-| SSH (`~/.ssh/config`) | host config | same file, sanitized | 🐧 | ⚖️ |
-| SSH private keys | authentication | generate new on new machine | 🐧 | 🛠️ |
+| SSH (`~/.ssh/config`) | host config | per-identity policy, see `docs/engineering/ssh.md` | 🐧 | ⚖️ |
+| SSH private keys | authentication | personal: restore from secure backup **or** generate new; company: do not migrate | 🐧 | 🛠️ |
 | GPG | signing | generate new on new machine | 🪟 | 🛠️ |
 | Keychain | secrets | Windows Credential Manager / `secret-tool` / WSL keyring | n/a | 🚫 |
 | VPN client | corporate VPN | `<REQUEST_FROM_IT>` | 🪟 | 🛠️ |

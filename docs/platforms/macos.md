@@ -14,8 +14,8 @@ Authoritative source: the `Brewfile` at the repo root, plus
 Currently managed via Homebrew (per `Brewfile`):
 
 - **CLI**: `bat`, `eza`, `fd`, `ffmpeg`, `fzf`, `gh`, `git-filter-repo`,
-  `go`, `jq`, `mkcert`, `node`, `opencode`, `python@3.14`, `ripgrep`,
-  `starship`, `tmux`, `uv`
+  `go`, `jq`, `mkcert`, `node`, `opencode`, `python@<version>`,
+  `ripgrep`, `starship`, `tmux`, `uv`
 - **Cask**: `iterm2`, `dbeaver-community`
 
 ## Configuration

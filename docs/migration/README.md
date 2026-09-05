@@ -8,6 +8,8 @@ Windows workstation.
 
 | Doc | Purpose | When to use |
 | --- | --- | --- |
+| [`manifest.md`](manifest.md) | Curated decision table: what to recreate, where, how | Planning + Dell bootstrap |
+| [`software-compatibility-matrix.md`](software-compatibility-matrix.md) | Per-application Windows/Debian/Omarchy compatibility (informational; manifest decides intent) | Planning |
 | [`pre-return-mac-checklist.md`](pre-return-mac-checklist.md) | Final actions before handing back the Mac | Last week on the MacBook |
 | [`windows-arrival-checklist.md`](windows-arrival-checklist.md) | Step-by-step bootstrap on the new machine | First day on the Dell |
 | [`mac-to-windows-matrix.md`](mac-to-windows-matrix.md) | Per-tool mapping | During planning |

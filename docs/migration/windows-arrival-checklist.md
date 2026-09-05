@@ -4,6 +4,24 @@ Use this checklist on the new Dell Windows workstation. Run the steps in
 order; do not skip ahead, because later steps depend on earlier ones
 (network connectivity, symlinks, etc.).
 
+## Detect, don't assume
+
+A new-employer Windows workstation is governed by policies you do not
+control. Several capabilities that look obvious may be restricted:
+
+- local administrator privileges
+- Developer Mode (required for non-admin symlink creation)
+- PowerShell execution policy (`Set-ExecutionPolicy` may be locked)
+- WSL2 / Hyper-V / virtualization
+- Docker Desktop (license + corporate approval)
+- winget / App Installer availability
+- Package installation to `C:\Program Files`
+
+**Each step below either detects the capability or has a documented
+fallback.** When a step fails, do not try to bypass the restriction;
+open an IT ticket and switch to the fallback while waiting. Phase 7
+tracks the corporate IT items as a separate list.
+
 ## Legend
 
 | Symbol | Meaning |
@@ -47,14 +65,31 @@ whoami /groups | findstr /i "admin"
 
 - [ ] 🧑‍💻 Open PowerShell as Administrator.
 - [ ] 🧑‍💻 Confirm version ≥ 7 if available: `$PSVersionTable.PSVersion`.
-- [ ] 🧑‍💻 Set execution policy for the current user:
+- [ ] 🧑‍💻 Install PowerShell 7 from Microsoft Store or `winget install
+      Microsoft.PowerShell` if not present.
+
+#### 1.4.1 Execution policy
+
+- [ ] 🧑‍💻 Detect the current execution policy:
+
+```powershell
+Get-ExecutionPolicy -List
+```
+
+- [ ] ⚠️ If `CurrentUser` is `Undefined` or `RemoteSigned`, the
+      scripts in this repo will run. No action needed.
+- [ ] ⚠️ If `CurrentUser` is `Restricted` or `AllSigned`, and the
+      `LocalMachine` scope is also restrictive, profile scripts will
+      be blocked. Two options:
+  - Change the user scope (may itself be locked):
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-- [ ] 🧑‍💻 Install PowerShell 7 from Microsoft Store or `winget install
-      Microsoft.PowerShell` if not present.
+  - If the change is denied by policy, fall back to running scripts
+    with `pwsh -ExecutionPolicy Bypass -File <path>` or invoke the
+    `bootstrap`/`inventory` scripts with `bash` via WSL2.
 
 ---
 
@@ -86,6 +121,21 @@ git --version
       see `platforms/windows/README.md` for the "copy instead of symlink"
       fallback.
 
+### 2.4 Git platform-specific override (host side)
+
+If you will also use Git for Windows on the host (not just inside
+WSL2), point it at the Windows-host platform override:
+
+```powershell
+$repo = (Resolve-Path "$env:USERPROFILE\src\MY-DEV-ENVIRONMENT").Path
+New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitconfig.local `
+    -Target "$repo\configs\git\gitconfig.windows-host"
+```
+
+This sets `credential.helper = manager` and `core.symlinks = true`.
+Inside WSL2, use `configs/git/gitconfig.wsl` instead. See
+`docs/engineering/git.md` for the full design.
+
 ---
 
 ## Phase 3 — WSL2 (you + corporate IT)
@@ -93,7 +143,21 @@ git --version
 Per `docs/decisions/0001-windows-vs-wsl2.md`, WSL2 is the primary
 development environment for Linux-oriented tools.
 
-### 3.1 Enable WSL2
+### 3.1 Detect / enable WSL2
+
+Per `docs/decisions/0001-windows-vs-wsl2.md`, WSL2 is the preferred
+environment for Linux-oriented tools. It is **not** mandatory — see
+Decision 0001 for the fallback to native Windows.
+
+- [ ] 🧑‍💻 Detect existing WSL state:
+
+```powershell
+wsl --status
+wsl -l -v
+```
+
+- [ ] ⚠️ If a distro is already installed, skip the install step below.
+- [ ] 🧑‍💻 To install (requires admin + Hyper-V + virtualization):
 
 ```powershell
 wsl --install
@@ -101,8 +165,9 @@ wsl --install
 
 This installs the WSL2 kernel and Ubuntu by default.
 
-- [ ] 🏢 If `wsl --install` fails with an admin or virtualization error,
-      open an IT ticket requesting WSL2 enablement.
+- [ ] 🏢 If `wsl --install` fails with admin, virtualization, or
+      licensing errors, open an IT ticket. While waiting, follow the
+      native-Windows fallback in `docs/decisions/0001-windows-vs-wsl2.md`.
 - [ ] 🧑‍💻 Reboot.
 - [ ] 🧑‍💻 Set WSL2 as the default version:
 
@@ -156,6 +221,14 @@ ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/tmux/tmux.conf ~/.tmux.conf
 ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/starship/starship.toml ~/.config/starship.toml
 ```
 
+Also set up the platform-specific Git override:
+
+```bash
+ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/git/gitconfig.wsl ~/.gitconfig.local
+```
+
+See `docs/engineering/git.md` for the two-layer Git design.
+
 ### 3.6 Install Linux tooling
 
 Per `platforms/macos/Brewfile` analogues, install inside WSL:
@@ -169,18 +242,27 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv manages its own Python; no apt Python needed unless a project
 specifically requires it.
 
-- [ ] 🧑‍💻 **Go**: install from `go.dev` (or use `brew` if Linuxbrew is
-      installed):
+- [ ] 🧑‍💻 **Go**: install from `go.dev` (Linux tarball; no Homebrew
+      required). Visit `https://go.dev/dl/` and download the current
+      stable Linux tarball for your architecture (typically
+      `linux-amd64` for x86_64 systems, `linux-arm64` for ARM):
 
 ```bash
-# example for the current stable Linux Go release
-wget https://go.dev/dl/go1.23.4.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.23.4.linux-amd64.tar.gz
+# example (replace <version> and <arch> with the current stable release)
+wget https://go.dev/dl/go<version>.linux-<arch>.tar.gz
+sudo tar -C /usr/local -xzf go<version>.linux-<arch>.tar.gz
 export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 ```
 
-Pin the version to match what the macOS side uses; capture the macOS
-version with `bash scripts/inventory/macos.sh` and update the URL here.
+Verify the installed version matches the macOS side:
+
+```bash
+go version
+```
+
+If exact version parity matters, capture the macOS version with
+`bash scripts/inventory/macos.sh` (see `inventory/raw/languages.txt`)
+and download the same version.
 
 - [ ] 🧑‍💻 **kubectl**: `https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/`
 - [ ] 🧑‍💻 **Helm**: `https://helm.sh/docs/intro/install/`
@@ -206,9 +288,9 @@ ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/shell/zshrc ~/.zshrc
 …or copy `configs/shell/zshrc` and adjust `$DEV_ENV_HOME` to point to
 `~/src/MY-DEV-ENVIRONMENT`.
 
-- [ ] 🧑‍💻 Edit `configs/shell/exports.zsh` for WSL: see
-      `configs/shared/README.md` — the `/opt/homebrew/bin/brew shellenv`
-      line must be guarded or removed when running in WSL.
+`configs/shell/exports.zsh` already guards the Homebrew block — it
+activates only when `/opt/homebrew/bin/brew` or `/usr/local/bin/brew`
+exists, so WSL2 with no Homebrew installed needs no edits.
 
 ---
 
@@ -238,27 +320,29 @@ terminals, and extensions running inside WSL2.
 
 ### 4.3 Apply committed VS Code configuration
 
-- [ ] 🧑‍💻 Copy `configs/vscode/settings.json` into
-      `%APPDATA%\Code\User\settings.json`, OR open Command Palette and
-      "Preferences: Open User Settings (JSON)" and paste the contents.
+The committed `configs/vscode/settings.json` contains one macOS-only
+key (`terminal.integrated.defaultProfile.osx`). On Windows, replace
+that line with the Windows-side equivalent rather than carrying it
+forward verbatim:
+
+```jsonc
+// In the user settings.json on the Windows host:
+// remove this line:
+"terminal.integrated.defaultProfile.osx": "zsh"
+// replace with:
+"terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)"
+```
+
+Steps:
+
+- [ ] 🧑‍💻 Open Command Palette → "Preferences: Open User Settings (JSON)".
+- [ ] 🧑‍💻 Paste the contents of `configs/vscode/settings.json` minus
+      the macOS-only key. Add the Windows replacement key above.
 - [ ] 🧑‍💻 Install recommended extensions:
 
 ```powershell
 # from a Git Bash or WSL shell in the repo root
 code --install-extension $(jq -r '.recommendations[]' configs/vscode/extensions.json | tr '\n' ' ')
-```
-
-- [ ] 🧑‍💻 Remove the macOS-only setting if it carries over:
-
-```jsonc
-// remove this line from settings.json once on Windows:
-"terminal.integrated.defaultProfile.osx": "zsh"
-```
-
-Replace with:
-
-```jsonc
-"terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)"
 ```
 
 ### 4.4 Docker Desktop
@@ -298,23 +382,31 @@ docker run --rm hello-world
 
 ### 5.1 SSH keys
 
-- [ ] 🔑 Generate a new SSH key on the new machine (do not transfer the
-      old one unless you generated it on personal hardware):
+SSH follows the identity-based policy in `docs/engineering/ssh.md`.
+There is no universal "generate a new key" rule — the correct action
+depends on whose identity the key represents.
+
+- [ ] 🔑 **Personal** (GitHub / GitLab / personal servers): restore
+      from a secure personal backup **or** generate a fresh key on the
+      new machine:
 
 ```bash
-ssh-keygen -t ed25519 -C "your-personal-email@example.com"
+ssh-keygen -t ed25519 -C "<PERSONAL_EMAIL>"
+ssh-add ~/.ssh/id_ed25519
 ```
 
-- [ ] 🔑 Add to `ssh-agent` and to GitHub / GitLab as appropriate.
-- [ ] 🧑‍💻 From the Mac (before returning), if you want to keep a copy
-      of the public key:
-
-```bash
-cat ~/.ssh/id_ed25519.pub
-```
-
-Add it manually to GitHub. The private key stays on the personal backup
-or is regenerated on the new machine.
+- [ ] 🔑 Register the public half with each personal service, then
+      verify (`ssh -T git@github.com` or equivalent).
+- [ ] 🚫 **Outgoing-company**: migrate nothing. Leave all
+      employer-provisioned keys, certificates, and host stanzas on the
+      old machine.
+- [ ] 🏢 **New-company**: provision exactly as the new employer's
+      security policy dictates (algorithm, certificates vs keys, SSO,
+      hardware tokens). Ask IT; do not assume.
+- [ ] 🧑‍💻 **Homelab**: restore personal keys from a secure personal
+      backup using a safe channel (never this public repo). Keep
+      internal addresses out of committed files; see
+      `docs/engineering/ssh.md` for the sanitized-pattern format.
 
 ### 5.2 Cloud authentication
 
@@ -335,25 +427,26 @@ or is regenerated on the new machine.
 
 ### 6.1 Run the validator
 
-In a WSL shell:
+The validator takes a `--profile` flag that matches the environment
+you're checking. Pick the one you are currently inside:
 
 ```bash
 cd ~/src/MY-DEV-ENVIRONMENT
-bash scripts/inventory/validate.sh
+
+# Inside WSL2
+bash scripts/inventory/validate.sh --profile wsl
+
+# Inside Windows Terminal (PowerShell)
+pwsh -Command "./scripts/inventory/validate.ps1 --profile windows-host"
+
+# On a Mac (current)
+bash scripts/inventory/validate.sh --profile mac
 ```
 
-Expected:
-
-```text
-OK      git         ...
-OK      python3     ...
-OK      uv          ...
-OK      go          ...
-OK      docker      ...
-... (other tools)
-```
-
-If `MISSING` appears, install the tool and rerun.
+A profile is a curated set of tools that should be present. `MISSING`
+indicates the tool is required by the profile but absent on this
+machine. `missing (optional)` indicates optional tooling that has not
+been installed yet.
 
 ### 6.2 End-to-end smoke test
 

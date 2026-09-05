@@ -38,7 +38,7 @@ MY-DEV-ENVIRONMENT
 ├── .gitignore                             hardened (SSH keys, kubeconfig, cloud creds, …)
 │
 ├── configs/                               portable + platform-specific dotfiles
-│   ├── git/                               gitconfig, global gitignore
+│   ├── git/                               shared gitconfig + per-platform overrides
 │   ├── shell/                             zsh config (current Mac + future WSL)
 │   ├── starship/                          Starship prompt
 │   ├── tmux/                              tmux config
@@ -68,7 +68,8 @@ MY-DEV-ENVIRONMENT
 │   ├── editors.md
 │   ├── containers.md
 │   ├── infrastructure.md
-│   └── system-settings.md
+│   ├── system-settings.md
+│   └── raw/                               local-only evidence (gitignored)
 │
 ├── platforms/                             platform-specific configuration files
 │   ├── macos/
@@ -81,13 +82,14 @@ MY-DEV-ENVIRONMENT
 │   └── shared/
 │
 ├── scripts/
-│   ├── inventory/                         read-only inspection scripts
-│   │   ├── macos.sh
-│   │   ├── windows.ps1
-│   │   └── validate.sh                    cross-platform tool checker
+│   ├── inventory/                         read-only inspection + validation
+│   │   ├── macos.sh                       macOS inventory capture
+│   │   ├── windows.ps1                    Windows inventory capture
+│   │   ├── validate.sh                    cross-platform tool checker (POSIX)
+│   │   └── validate.ps1                   cross-platform tool checker (PowerShell)
 │   └── bootstrap/                         idempotent installers
-│       ├── macos.sh
-│       └── windows.ps1
+│       ├── macos.sh                       --dry-run, --force, --skip-brew
+│       └── windows.ps1                    -DryRun, -Force, -SkipWinget
 │
 └── templates/                             copy-and-edit skeletons
     └── .env.example
@@ -105,14 +107,19 @@ bash scripts/inventory/macos.sh
 ### Bootstrap a fresh macOS machine
 
 ```bash
-bash scripts/bootstrap/macos.sh
+bash scripts/bootstrap/macos.sh --dry-run   # preview
+bash scripts/bootstrap/macos.sh             # apply (safe: skips existing real files)
+bash scripts/bootstrap/macos.sh --force     # back up + replace existing files
+bash scripts/bootstrap/macos.sh --skip-brew # symlinks only, no brew install
 ```
 
 ### Bootstrap the new Dell Windows workstation
 
 ```powershell
-# from the cloned repo on the Windows host
-pwsh scripts/bootstrap/windows.ps1
+pwsh scripts/bootstrap/windows.ps1 -DryRun    # preview
+pwsh scripts/bootstrap/windows.ps1            # apply
+pwsh scripts/bootstrap/windows.ps1 -Force     # back up + replace existing files
+pwsh scripts/bootstrap/windows.ps1 -SkipWinget # symlinks only
 ```
 
 WSL2-side setup is documented in
@@ -120,9 +127,21 @@ WSL2-side setup is documented in
 
 ### Validate the toolchain
 
+The validator is **profile-aware** so it does not require WSL-only tools
+on the Windows host or vice versa.
+
 ```bash
-bash scripts/inventory/validate.sh          # POSIX (macOS, Linux, WSL)
+bash scripts/inventory/validate.sh --profile mac
+bash scripts/inventory/validate.sh --profile wsl
+bash scripts/inventory/validate.sh --profile windows-host
+
+pwsh scripts/inventory/validate.ps1 -Profile mac
+pwsh scripts/inventory/validate.ps1 -Profile wsl
+pwsh scripts/inventory/validate.ps1 -Profile windows-host
 ```
+
+The `universal` profile is the default when no profile is passed; it
+checks only tools expected on every host.
 
 ## Migration documentation
 

@@ -53,10 +53,15 @@ git commit -m "docs(inventory): capture outgoing macOS inventory"
 ## 5. Capture SSH configuration safely
 
 - [ ] `bash scripts/inventory/macos.sh` (the SSH section) produces a
-      sanitized file at `inventory/raw/ssh.md`.
+      structural summary at `inventory/raw/ssh.md` (counts only — no
+      hostnames, IPs, fingerprints, or key contents).
 - [ ] Confirm no private keys are referenced in committed files.
-- [ ] Document the naming convention for any future personal SSH keys
-      (see `docs/engineering/git.md`).
+- [ ] Confirm no company host stanzas remain in any personal SSH config
+      you carry forward (review by hand on the source machine; the
+      script cannot do this for you).
+- [ ] Personal keys: back up via a secure personal channel (never this
+      repo). See `docs/engineering/ssh.md` for the identity-based
+      policy.
 
 ## 6. Capture editor configuration
 
@@ -128,8 +133,8 @@ git clone git@github.com:Nilmar-Kloh/MY-DEV-ENVIRONMENT.git ~/personal/MY-DEV-EN
 
 ## 13. Verify repository is self-sufficient
 
-- [ ] On the personal backup, can `bash scripts/inventory/validate.sh`
-      run? (It depends only on standard tools.)
+- [ ] On the personal backup, can `bash scripts/inventory/validate.sh
+      --profile mac` run? (It depends only on standard tools.)
 - [ ] On the personal backup, does `docs/migration/windows-arrival-checklist.md`
       contain everything needed to bootstrap a Windows machine without
       access to the Mac?

@@ -17,10 +17,16 @@ application, service, or repository architecture.
 
 ## Version Policy
 
-The workstation follows the current stable Go release provided by Homebrew.
-The current installation is Go 1.26.x. The `Brewfile` tracks the formula
-without pinning a patch release so new workstations can receive the current
-stable patch version through the normal Homebrew update process.
+The workstation follows the current stable Go release provided by
+Homebrew. The `Brewfile` tracks the formula without pinning a patch
+release so new workstations receive the current stable patch version
+through the normal Homebrew update process.
+
+To discover the installed version at any time:
+
+```bash
+go version
+```
 
 ## GOPATH and GOBIN
 

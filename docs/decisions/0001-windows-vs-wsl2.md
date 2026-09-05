@@ -77,3 +77,18 @@ If WSL2 is unavailable:
 - kubectl / Helm via Windows binaries.
 - The boundary between "WSL repos" and "Windows repos" collapses; treat
   everything as Windows-native and document deviations.
+
+## Validation
+
+The validator is profile-aware so it does not require WSL-only tools on
+the Windows host or vice versa:
+
+```bash
+bash scripts/inventory/validate.sh --profile mac
+bash scripts/inventory/validate.sh --profile wsl
+bash scripts/inventory/validate.sh --profile windows-host
+
+pwsh scripts/inventory/validate.ps1 -Profile mac
+pwsh scripts/inventory/validate.ps1 -Profile wsl
+pwsh scripts/inventory/validate.ps1 -Profile windows-host
+```

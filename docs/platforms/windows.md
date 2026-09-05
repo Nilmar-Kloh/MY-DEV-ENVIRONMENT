@@ -56,9 +56,13 @@ not assume any of them are available. See
 | PowerShell profile | `configs/windows/powershell/profile.ps1` |
 | Windows-side aliases | `configs/windows/powershell/aliases.ps1` |
 | VS Code | `configs/vscode/*` (same files, host or WSL) |
-| Git for Windows | `configs/git/gitconfig` (symlinked into both host and WSL) |
+| Git shared config | `configs/git/gitconfig` (symlinked into both host and WSL) |
+| Git host override | `configs/git/gitconfig.windows-host` → `~/.gitconfig.local` |
+| Git WSL override | `configs/git/gitconfig.wsl` → `~/.gitconfig.local` |
 | tmux (WSL2) | `configs/tmux/tmux.conf` (symlinked into WSL) |
 | Starship (WSL2) | `configs/starship/starship.toml` (symlinked into WSL) |
+
+See `docs/engineering/git.md` for the two-layer Git design.
 
 ## Package manager
 
@@ -78,4 +82,6 @@ The full arrival procedure lives in
 5. Install winget packages from `platforms/windows/packages.txt`.
 6. Inside WSL2: clone this repo to `~/src/MY-DEV-ENVIRONMENT`.
 7. Symlink dotfiles per `configs/windows/powershell/README.md`.
-8. `bash scripts/inventory/validate.sh` to confirm.
+8. `bash scripts/inventory/validate.sh --profile wsl` (or
+   `pwsh scripts/inventory/validate.ps1 -Profile windows-host`) to
+   confirm.

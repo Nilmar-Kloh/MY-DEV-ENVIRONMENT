@@ -11,9 +11,10 @@ development.
 `pip`, `pip-tools`, `virtualenv`, `pyenv`, and `poetry` for most use
 cases.
 
-System Python (currently `python@3.14` via Homebrew on macOS) is used
-only to bootstrap `uv` itself. Project Python is selected per-project by
-`uv`.
+System Python on macOS comes from the `python@<version>` formula in
+the `Brewfile`. The exact version is in `inventory/raw/cli-tools.txt`
+and `inventory/raw/languages.txt` — refer to those, do not hard-code
+here.
 
 ## Conventions
 
