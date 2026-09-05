@@ -1,49 +1,54 @@
-# Infrastructure & cloud tooling — inventory template
+# Infrastructure & cloud tooling — inventory
 
 Source of truth: `bash scripts/inventory/macos.sh` (`inventory/raw/cli-tools.txt`)
 plus manual addition for items the script may miss.
 
-Tags: `[essential] [useful] [optional] [company] [excluded]`
+Tag vocabulary: see `inventory/README.md`.
+
+Important: the live inventory reports **none** of these tools as
+detected on the current Mac. They are all `[TARGET]` for the new Dell
+workstation, not `[DETECTED]` on the outgoing Mac.
 
 ## Kubernetes
 
-| Tool | Purpose | Install on Windows |
+| Tool | Status | Notes |
 | --- | --- | --- |
-| kubectl | cluster control | WSL2: `brew install kubectl` or download from kubernetes.io |
-| helm | package manager | WSL2: `brew install helm` |
-| k9s | TUI dashboard | WSL2: `brew install k9s` |
-| kubeconfig | cluster auth | NEVER commit. See `docs/secrets-policy.md`. |
+| kubectl | [ABSENT][TARGET] | install per kubernetes.io |
+| helm | [ABSENT][TARGET] | install per helm.sh |
+| k9s | [ABSENT][TARGET] | install per k9scli.io |
+| kubeconfig | [EXCLUDED] | NEVER commit. See `docs/secrets-policy.md`. |
 
 ## IaC
 
-| Tool | Purpose | Install on Windows |
+| Tool | Status | Notes |
 | --- | --- | --- |
-| terraform | IaC | WSL2: install per HashiCorp docs |
-| tofu (OpenTofu) | IaC fork | WSL2: install per opentofu.org |
-| ansible | config management | WSL2: `apt install ansible` or `brew install ansible` |
-| packer | machine images | optional |
+| terraform | [ABSENT][TARGET] | install per developer.hashicorp.com |
+| tofu (OpenTofu) | [ABSENT][TARGET] | install per opentofu.org |
+| ansible | [DETECTED][TARGET] | brew on Mac; distro pkg on WSL2 |
+| packer | [ABSENT][OPTIONAL] | install per developer.hashicorp.com |
 
 ## Cloud CLIs
 
-| Tool | Notes |
-| --- | --- |
-| aws | `~/.aws/` is NEVER committed. Credentials handled outside this repo. |
-| gcloud | same |
-| az | same |
+| Tool | Status | Notes |
+| --- | --- | --- |
+| aws | [ABSENT][TARGET] | `winget install Amazon.AWSCLI` |
+| gcloud | [ABSENT][TARGET] | `winget install Google.CloudSDK` |
+| az | [ABSENT][TARGET] | `winget install Microsoft.AzureCLI` |
+
+These were absent on the live Mac. Do not represent them as currently
+installed.
 
 ## Secrets handling
 
-- `~/.kube/config` — never committed. Use a secrets manager or manual restore.
+- `~/.kube/config` — never committed. Use a secrets manager or manual
+  restore.
 - `~/.aws/credentials` — never committed.
-- `~/.config/gcloud/application_default_credentials.json` — never committed.
+- `~/.config/gcloud/application_default_credentials.json` — never
+  committed.
 - Cloud SSO sessions — re-authenticate on the new machine.
 
 ## Validation
 
 ```bash
-kubectl version --client
-helm version --short
-terraform version
-tofu version
-aws --version
+bash scripts/inventory/validate.sh --profile wsl
 ```

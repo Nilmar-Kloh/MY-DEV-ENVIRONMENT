@@ -1,22 +1,37 @@
-# Languages & runtimes — inventory template
+# Languages & runtimes — inventory
 
-Source of truth: `bash scripts/inventory/macos.sh` output (`inventory/raw/languages.txt`).
+Source of truth: `bash scripts/inventory/macos.sh` (`inventory/raw/languages.txt`)
+plus `inventory/raw/cli-tools.txt`.
 
-Tags: `[essential] [useful] [optional] [managed] [company] [excluded]`
+Tag vocabulary: see `inventory/README.md`.
 
-## Currently used on macOS
+## Currently present on the Mac (DETECTED)
 
-| Language | Manager | Version intent | Pin policy | Notes |
-| --- | --- | --- | --- | --- |
-| Python | brew (`python@3.14`) + uv | stable | uv per-project | No system-wide pin. uv handles project-level resolution. |
-| Go | brew (`go`) | stable | Homebrew formula | `Brewfile` does not pin a patch version. |
-| Node | brew (`node`) | stable | Homebrew formula | `Brewfile` does not pin a major. |
-| npm | bundled | whatever Node ships | n/a | |
-| pnpm | brew/manual | latest | optional | |
-| Rust | (likely not currently used) | — | — | Add row when needed. |
-| Ruby | (likely not currently used) | — | — | Add row when needed. |
-| Java | (likely not currently used) | — | — | Add row when needed. |
-| .NET | (likely not currently used) | — | — | Add row when needed. |
+| Language | Manager | Mac evidence |
+| --- | --- | --- |
+| Python | brew (`python@<ver>`) + uv | `inventory/raw/cli-tools.txt` |
+| Go | brew (`go`) | `inventory/raw/cli-tools.txt` |
+| Node | brew (`node`) | `inventory/raw/cli-tools.txt` |
+
+The Python runtime is `3.14.x` per the live run. The exact version is in
+`inventory/raw/languages.txt` and should NOT be hard-coded here.
+
+## Runtimes present but NOT deliberately managed (DROP)
+
+These appear in the live inventory but are macOS-bundled, not
+intentionally installed. They are not part of the target environment.
+
+| Language | Status | Evidence | Notes |
+| --- | --- | --- | --- |
+| Ruby 2.6.10 | [DETECTED][DROP] | `inventory/raw/languages.txt` | macOS system Ruby. Do not migrate; install per-project only if needed. |
+| Java (stub) | [DETECTED][DROP] | `inventory/raw/cli-tools.txt` (`java`/`javac` present, empty version) | Apple stub JDK. Do not migrate; install a real JDK per-project only if needed. |
+
+## Languages NOT on the Mac (ABSENT)
+
+| Language | Status | Notes |
+| --- | --- | --- |
+| Rust / cargo / rustup | [ABSENT] | not in PATH |
+| .NET | [ABSENT] | not in PATH |
 
 ## Capture commands
 
@@ -29,26 +44,25 @@ pnpm --version
 uv --version
 ```
 
-## Python toolchain
+## Python toolchain (TARGET)
 
 | Tool | Purpose | Manager |
 | --- | --- | --- |
-| uv | Python package + project management | brew → uv tool / per-project |
-| ruff | linter + formatter | uv tool / per-project |
-| mypy / pyright | type checking | uv tool / per-project |
-| pytest | testing | uv dev / per-project |
+| uv | Python package + project management | `uv tool` or per-project |
+| ruff | linter + formatter | per-project |
+| mypy / pyright | type checking | per-project |
+| pytest | testing | per-project |
 | uvicorn | ASGI dev server | per-project |
-| black | formatter | optional (ruff replaces) |
 
-Conventions (see `docs/engineering/python.md`):
+Conventions:
 
 - Project-level Python is managed by `uv`, not by the system Python.
-- System Python exists for `uv` itself and for bootstrapping.
+- System Python exists to bootstrap `uv` itself.
 - Virtual environments are NOT migrated; they are recreated.
 
-## Go toolchain
+## Go toolchain (TARGET)
 
-See `docs/en/engineering/go.md` (already in repo).
+Per `docs/en/engineering/go.md`:
 
 | Tool | Purpose |
 | --- | --- |
@@ -58,25 +72,33 @@ See `docs/en/engineering/go.md` (already in repo).
 | staticcheck | static analysis |
 | dlv | debugging |
 
-## Node toolchain
+Installed via `go install`; binaries in `$HOME/go/bin` and added to
+`PATH`. Capture the current installed list with:
 
-| Tool | Purpose |
-| --- | --- |
-| node | runtime |
-| npm | package manager |
-| pnpm | alternate package manager |
+```bash
+ls -1 "$HOME/go/bin" 2>/dev/null
+```
 
-## Windows layout
+## Node toolchain (DETECTED, partial)
+
+| Tool | Status | Notes |
+| --- | --- | --- |
+| node | [DETECTED] | via Brewfile |
+| npm | [DETECTED] | bundled |
+| pnpm | [ABSENT] | install if needed |
+
+## Windows / WSL layout
 
 | Language | Windows host | WSL2 |
 | --- | --- | --- |
-| Python | — | uv-managed |
-| Go | — | brew-style installer (golang.org tarball) |
-| Node | winget `OpenJS.NodeJS.LTS` | optional nvm |
-| Rust | rustup-init (winget) | optional rustup |
+| Python | — | uv-managed (preferred) |
+| Go | — | upstream Linux tarball |
+| Node | `winget install OpenJS.NodeJS.LTS` | optional nvm |
+| Rust | rustup-init (`winget`) | optional rustup |
 
 ## Validation
 
 ```bash
-bash scripts/inventory/validate.sh
+bash scripts/inventory/validate.sh --profile mac
+bash scripts/inventory/validate.sh --profile wsl
 ```

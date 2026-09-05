@@ -1,105 +1,120 @@
-# Applications — current inventory (Mac)
+# Applications — curated inventory
 
-Captured from a live run of `bash scripts/inventory/macos.sh` on the
-outgoing MacBook. See `inventory/raw/applications.txt` for the raw
-output. Each item below has been manually reviewed and tagged.
+Source of truth: `bash scripts/inventory/macos.sh` (output in
+`inventory/raw/applications.txt`, gitignored local evidence).
 
-Tags:
+Decision vocabulary (Task 5 definitions):
 
-- `[essential]` — required for daily development
-- `[useful]` — improves workflow, acceptable to postpone
-- `[optional]` — nice to have, low cost to add later
-- `[company]` — provided/managed by current employer; do NOT migrate
-- `[personal]` — personal, OK to reinstall on personal hardware
-- `[excluded]` — intentional non-migration
+- **`[KEEP]`** — deliberate personal environment. Recreate on the Dell / WSL2.
+- **`[REPLACE]`** — capability survives, implementation changes.
+- **`[OPTIONAL]`** — useful, not required for initial bootstrap. Must not block validation.
+- **`[COMPANY]`** — belongs to or is managed by the outgoing employer. Do not migrate.
+- **`[DROP]`** — installed but not worth deliberately recreating.
+- **`<USER_REVIEW>`** — evidence insufficient; owner decides.
 
-## Development
+Every row below was detected by the live run unless noted otherwise.
 
-| Application | Tag | Migration |
+## Development — KEEP / REPLACE
+
+| Application | Decision | Target / notes |
 | --- | --- | --- |
-| iTerm | [essential] | `winget install Microsoft.WindowsTerminal` (WSL2 zsh) |
-| Visual Studio Code | [essential] | `winget install Microsoft.VisualStudioCode` |
-| Cursor | [useful] | download from cursor.sh |
-| DBeaver | [useful] | `winget install DBeaver.DBeaverCommunity` |
-| Obsidian | [essential] | `winget install Obsidian.Obsidian` |
-| GitHub Desktop | [optional] | `winget install GitHub.GitHubDesktop` |
-| Fork | [optional] | download from git-fork.com |
-| OpenCode | [useful] | personal — same product available cross-platform |
-| ChatGPT | [optional] | personal browser session |
-| Claude | [optional] | personal browser session |
+| Visual Studio Code | [KEEP] | `winget install Microsoft.VisualStudioCode`. Primary editor. |
+| iTerm | [REPLACE] | Windows Terminal (`winget install Microsoft.WindowsTerminal`); shell itself moves to WSL2 zsh. |
+| DBeaver | [KEEP] | `winget install DBeaver.DBeaverCommunity`. Primary DB GUI. |
+| OpenCode | [KEEP] | Declared in Brewfile → deliberate. Cross-platform download on the Dell. |
+| Obsidian | [KEEP] | `winget install Obsidian.Obsidian`. Personal notes system. |
+
+## Development — OPTIONAL (redundant / review)
+
+| Application | Decision | Target / notes |
+| --- | --- | --- |
+| Cursor | [OPTIONAL] | Second editor alongside VS Code. No Cursor-specific config in repo. Recreate only if it earns its place. |
+| GitHub Desktop | [OPTIONAL] | Overlaps with CLI + Fork. Recreate only if GUI Git workflow is wanted. |
+| Fork | [OPTIONAL] | Overlaps with CLI + GitHub Desktop. Pick at most one Git GUI. `<USER_REVIEW>`: choose Fork vs GitHub Desktop vs neither. |
+| ChatGPT (app) | [OPTIONAL] | Browser session suffices. |
+| Claude (app) | [OPTIONAL] | Browser session suffices. |
 
 ## Productivity
 
-| Application | Tag | Migration |
+| Application | Decision | Target / notes |
 | --- | --- | --- |
-| Raycast | [useful] | Windows: PowerToys Run (`winget install Microsoft.PowerToys`) |
-| Rectangle | [optional] | Windows: PowerToys FancyZones |
-| AltTab | [optional] | Windows: built-in alt-tab or PowerToys |
-| Keka | [optional] | Windows: 7-Zip (`winget install 7zip.7zip`) |
-| Dropover | [optional] | skip |
-| BetterDisplay | [optional] | Windows Display settings |
-| LocalSend | [optional] | `winget install LocalSend.LocalSend` |
-| OneDrive | [company] | personal Microsoft account on personal machine |
-| Dropbox | [personal] | `winget install Dropbox.Dropbox` |
+| Raycast | [REPLACE] | PowerToys Run (`winget install Microsoft.PowerToys`). |
+| Rectangle | [REPLACE] | PowerToys FancyZones (same install). |
+| Keka | [REPLACE] | 7-Zip (`winget install 7zip.7zip`). |
+| LocalSend | [OPTIONAL] | `winget install LocalSend.LocalSend`. Useful, not bootstrap. |
+| Dropbox | [OPTIONAL] | Personal account. Install only if still used. |
+| AltTab | [DROP] | macOS gap-filler; Windows Alt-Tab is native. |
+| Dropover | [DROP] | macOS drag-drop shelf; no Windows equivalent needed. |
+| BetterDisplay | [DROP] | macOS display-quirk tool; use Windows Display settings. |
+| Windows App | [OPTIONAL] | Microsoft remote-desktop client; handy on Windows, not bootstrap. |
 
 ## Browsers
 
-| Application | Tag | Migration |
+| Application | Decision | Target / notes |
 | --- | --- | --- |
-| Google Chrome | [useful] | already on Windows by default usually |
-| Google Chrome 2 | [excluded] | duplicate install — likely test profile |
-| Microsoft Edge | [company] | managed by employer |
-| Windows App | [optional] | n/a |
-| WhatsApp | [optional] | install on personal phone |
+| Google Chrome | [KEEP] | Personal browser. Install per corporate policy on the Dell. |
+| Google Chrome 2 | [DROP] | Duplicate install. |
+| Microsoft Edge | [COMPANY] | Managed by employer on the Mac; the Dell ships its own Edge. |
+| WhatsApp | [DROP] | Phone companion app, not part of the dev environment. |
 
-## Media (creative / personal)
+## Media / creative — all OPTIONAL, none bootstrap
 
-| Application | Tag | Migration |
+The Dell is a development workstation, not a media workstation. None of
+these block validation. Recreate individually on personal hardware as
+needed; do not bundle into the developer bootstrap.
+
+| Application | Decision | Notes |
 | --- | --- | --- |
-| Adobe Premiere Pro (Beta) | [optional] | license is personal/CC; install on personal machine |
-| Adobe Premiere Pro 2026 | [optional] | same |
-| Adobe Media Encoder (Beta) | [optional] | same |
-| Adobe Media Encoder 2026 | [optional] | same |
-| DaVinci Resolve | [optional] | free; install on personal machine |
-| Cavalry | [optional] | personal |
-| Insta360 Studio | [optional] | personal |
-| DJI Studio | [optional] | personal |
-| Blender | [optional] | personal |
-| OBS | [optional] | `winget install OBSProject.OBSStudio` |
-| Shutter Encoder | [optional] | personal |
-| Affinity | [optional] | personal license |
+| Adobe Premiere Pro (Beta / 2026) | [OPTIONAL] | personal license |
+| Adobe Media Encoder (Beta / 2026) | [OPTIONAL] | personal license |
+| DaVinci Resolve (+ Uninstall Resolve) | [OPTIONAL] | free version available |
+| DaVinci Control Panels Setup | [OPTIONAL] | Resolve peripheral |
+| Blackmagic RAW Player / Speed Test / Remote Monitor / Proxy Generator | [OPTIONAL] | blackmagicdesign.com |
+| Fairlight Studio Utility | [OPTIONAL] | Resolve ecosystem |
+| Cavalry | [OPTIONAL] | personal |
+| Insta360 Studio | [OPTIONAL] | personal |
+| DJI Studio | [OPTIONAL] | personal |
+| Blender | [OPTIONAL] | `winget install BlenderFoundation.Blender` |
+| OBS | [OPTIONAL] | `winget install OBSProject.OBSStudio` |
+| Shutter Encoder | [OPTIONAL] | personal |
+| Affinity | [OPTIONAL] | personal license |
 
-## Hardware peripherals
+## Hardware peripherals — all OPTIONAL
 
-| Application | Tag | Migration |
+Tied to physical devices, not to the Dell bootstrap. Install from the
+vendor when the device is in use.
+
+| Application | Decision | Notes |
 | --- | --- | --- |
-| Wacom Center / Display / Tablet Utility | [optional] | install from wacom.com on personal machine |
-| Contour Design Multimedia | [optional] | install from contourdesign.com |
-| Logi Options+ (logioptionsplus / LogiPluginService / Driver Installer) | [optional] | `winget install Logitech.OptionsPlus` |
-| DisplayLink Manager | [optional] | install from displaylink.com |
-| Blackmagic RAW Player / Speed Test / Remote Monitor / Proxy Generator | [optional] | install from blackmagicdesign.com |
-| Fairlight Studio Utility | [optional] | part of DaVinci Resolve ecosystem |
+| Wacom Center / Display Settings / Tablet Utility | [OPTIONAL] | wacom.com |
+| Contour Design Multimedia | [OPTIONAL] | contourdesign.com |
+| Logi Options+ / LogiPluginService / Driver Installer | [OPTIONAL] | `winget install Logitech.OptionsPlus` |
+| DisplayLink Manager | [OPTIONAL] | displaylink.com |
 
-## Company-managed (DO NOT migrate)
+## Company-managed — DO NOT migrate
 
-These are provided by the current employer. Do not commit, copy, or
-transfer. Document only the name.
+Detected on the Mac; belong to the outgoing employer. No migration
+instructions. Where the new employer may provide an equivalent, the
+marker is `<REQUEST_FROM_IT>`.
 
-| Application | Purpose |
-| --- | --- |
-| JamfProtect | endpoint security (MDM) |
-| Kaspersky Anti-Virus For Mac | endpoint security (AV) |
-| GlobalProtect | corporate VPN |
-| Splashtop On-Prem | remote support (corp) |
-| Central de Software | corporate software portal |
-| Setup Manager / Setup Checklist | corporate onboarding |
-| IBM Aspera Connect / Crypt / Launcher | corporate file transfer |
+| Application | Purpose | New-employer equivalent |
+| --- | --- | --- |
+| JamfProtect | endpoint security (MDM) | `<REQUEST_FROM_IT>` |
+| Kaspersky Anti-Virus For Mac | endpoint security (AV) | `<REQUEST_FROM_IT>` |
+| GlobalProtect | corporate VPN | `<REQUEST_FROM_IT>` |
+| Splashtop On-Prem | remote support | `<REQUEST_FROM_IT>` |
+| Central de Software | corporate software portal | `<REQUEST_FROM_IT>` |
+| Setup Manager / Setup Checklist (+ Utilities copy) | corporate onboarding | — (old-employer onboarding, ignore) |
+| IBM Aspera Connect / Crypt / Launcher | corporate file transfer | `<REQUEST_FROM_IT>` |
+| Microsoft Teams | corporate comms (corporate account only) | `<REQUEST_FROM_IT>` |
+| Microsoft Outlook / Word / Excel / PowerPoint | corporate account | `<REQUEST_FROM_IT>` (personal M365 is separate) |
+| Microsoft OneDrive | corporate account sync | `<REQUEST_FROM_IT>` (personal OneDrive is separate) |
+| VNC Viewer | corporate remote access | `<REQUEST_FROM_IT>` |
+| AnyDesk | corporate remote access | `<REQUEST_FROM_IT>` |
 
-## Excluded (intentional)
+## Notes on detection gaps
 
-| Application | Reason |
-| --- | --- |
-| Microsoft Teams | corporate account only |
-| Microsoft Outlook / Word / Excel / PowerPoint | corporate account; personal Microsoft 365 on personal machine is separate |
-| VNC Viewer | corporate remote access |
-| AnyDesk | corporate remote access |
+These were NOT in the live `inventory/raw/applications.txt`:
+
+- Docker Desktop (no `/Applications` entry; CLI runtime present — see `inventory/containers.md`)
+- WSL2 / Windows Terminal (not applicable to macOS)

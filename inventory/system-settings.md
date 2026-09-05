@@ -1,27 +1,32 @@
-# System settings — inventory template
+# System settings — inventory
 
-Source of truth: `bash scripts/inventory/macos.sh` (`inventory/raw/machine.md`, `shell-files.txt`).
+Source of truth: `bash scripts/inventory/macos.sh` (`inventory/raw/machine.md`, `inventory/raw/shell-files.txt`).
 
-## macOS context
+Tag vocabulary: see `inventory/README.md`.
 
-| Item | Captured |
+## macOS context (DETECTED)
+
+| Item | Source |
 | --- | --- |
-| macOS version | from script |
-| Hardware model / chip | from script |
-| Architecture (arm64 vs x86_64) | from script |
-| Default shell | from script |
-| Hostname | from script |
+| macOS version | `inventory/raw/machine.md` |
+| Hardware model / chip | `inventory/raw/machine.md` |
+| Architecture (arm64 vs x86_64) | `inventory/raw/machine.md` |
+| Default shell | `inventory/raw/machine.md` |
+| Hostname | `inventory/raw/machine.md` (raw only) |
 
-## Shell
+Do not transcribe the hostname into the committed inventory.
 
-| File | Source | Notes |
+## Shell (DETECTED)
+
+| File | Status | Notes |
 | --- | --- | --- |
-| `~/.zshrc` | symlink to this repo | via `bootstrap` step |
-| `~/.tmux.conf` | symlink to this repo | via manual `ln -sf` (per `configs/tmux/README.md`) |
-| `~/.gitconfig` | symlink to this repo | to set up |
-| `~/.gitignore_global` | symlink to this repo | to set up |
+| `~/.zshrc` | [DETECTED] | symlink to repo |
+| `~/.tmux.conf` | [DETECTED] | symlink to repo (after bootstrap) |
+| `~/.gitconfig` | [DETECTED] | not a symlink — see `inventory/raw/shell-files.txt` |
+| `~/.gitignore_global` | [DETECTED] | symlink to repo (after bootstrap) |
 
-See `configs/shell/`, `configs/tmux/`, `configs/git/` for the actual files.
+See `configs/shell/`, `configs/tmux/`, `configs/git/` for the actual
+files.
 
 ## What is intentionally not migrated
 

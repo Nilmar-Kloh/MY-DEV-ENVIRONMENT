@@ -1,32 +1,49 @@
 # Inventory
 
-This directory holds the **versioned inventory** of my development environment.
+This directory holds the **reviewed inventory** of my development
+environment. It is the canonical answer to: *what do I depend on, and
+how is it currently installed?*
 
-It is the canonical answer to: *what do I depend on, and how is it currently installed?*
+Inventory is captured by running a script on the live machine. Nothing in
+this directory should be hand-edited from memory — the source of truth
+is the script output, reviewed and committed.
 
-Inventory is captured by running a script on the live machine. Nothing in this
-directory should be hand-edited from memory — the source of truth is the script
-output, reviewed and committed.
+## Two levels: reviewed vs raw
 
-## How it works
+| Level | Path | Purpose | Git status |
+| --- | --- | --- | --- |
+| **Reviewed** | `inventory/*.md` | Sanitized, classified Markdown tables. The committed source of truth. | **Committed** |
+| **Raw** | `inventory/raw/` | Timestamped machine-specific evidence captured by the inventory scripts. Includes version strings, hostname, application list, structural SSH summary, etc. | **Local only** (gitignored) |
 
-| Phase | What | Where |
-| --- | --- | --- |
-| Capture | Run a read-only inspection script | `scripts/inventory/macos.sh` or `scripts/inventory/windows.ps1` |
-| Raw output | Timestamped, machine-specific artifacts | `inventory/raw/` (gitignored) |
-| Reviewed inventory | Sanitized, classified Markdown tables | `inventory/*.md` (committed) |
+`inventory/raw/` is treated as **local-sensitive evidence**. Even though
+the scripts redact aggressively (no private keys, no tokens, no
+hostnames, no IPs, no fingerprints, no file sizes that fingerprint key
+types), raw output still contains machine-specific information
+(hostname, version strings, exact installed packages) that should not
+leave the workstation that produced it.
 
-The raw output stays local. The committed inventory is the *reviewed* version.
+Review the raw output, then transcribe the relevant classifications
+into `inventory/*.md` and commit those.
 
-## Classification
+## Classification tags
 
 Every item in the committed inventory is tagged:
 
-- **detected** — confirmed by the inspection script on this machine
-- **managed** — explicitly installed or configured by the user (Brewfile, dotfile, etc.)
-- **company** — provided/managed by corporate IT. Document the name, not the contents.
-- **candidate** — worth migrating to the new platform
-- **excluded** — intentional: not portable, not personally owned, or not worth migrating
+- **`[DETECTED]`** — confirmed by the inspection script on a real run.
+  Only mark after running the script.
+- **`[TARGET]`** — target for the new (Windows) workstation. The
+  intended post-migration state.
+- **`[OPTIONAL]`** — nice to have, not required for daily work.
+- **`[COMPANY]`** — provided/managed by corporate IT. Do NOT migrate.
+- **`[PERSONAL]`** — personal, owned by you. Safe to reinstall on
+  personal hardware.
+- **`[EXCLUDED]`** — intentionally not migrating (license, duplicate,
+  non-portable, etc.).
+
+A tool's status on the Mac (`[DETECTED]`) and its status on the Dell
+(`[TARGET]`) are independent. `[DETECTED]` does NOT imply `[TARGET]`,
+and `[TARGET]` does NOT require `[DETECTED]` (e.g., `terraform` is a
+target even if it is not currently installed on the Mac).
 
 ## Files
 

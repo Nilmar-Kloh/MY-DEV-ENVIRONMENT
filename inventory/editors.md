@@ -1,13 +1,16 @@
-# Editors — inventory template
+# Editors — inventory
 
 Source of truth: live editor + `configs/vscode/`.
 
-## Primary editor
+Tag vocabulary: see `inventory/README.md`.
 
-**Visual Studio Code** — the committed `configs/vscode/*` files are already
-the source of truth for portable settings.
+## VS Code (DETECTED, TARGET)
 
-| File | Purpose |
+`configs/vscode/*` is already the portable source of truth. The
+committed `extensions.json`, `settings.json`, `keybindings.json` carry
+the shared configuration across machines.
+
+| File | Role |
 | --- | --- |
 | `configs/vscode/settings.json` | User settings (committed, portable) |
 | `configs/vscode/extensions.json` | Recommended extensions |
@@ -22,15 +25,19 @@ the source of truth for portable settings.
 - Go: language server + `gofmt`, no auto-tool updates
 - macOS-only: `terminal.integrated.defaultProfile.osx = zsh`
 
-### Settings profile migration
+### Profile migration
 
 On the new machine:
 
-1. Install VS Code via `winget install Microsoft.VisualStudioCode`
-2. Copy `configs/vscode/settings.json` to `~/AppData/Code/User/settings.json` (Windows)
-3. Or open the repo in VS Code → Command Palette → "Open User Settings (JSON)"
-4. Do NOT copy `Code/User/settings.json` from the company Mac; user-level
-   settings may contain machine-specific paths.
+1. Install VS Code: `winget install Microsoft.VisualStudioCode`.
+2. Open VS Code → Command Palette → "Preferences: Open User Settings
+   (JSON)".
+3. Paste the contents of `configs/vscode/settings.json` **minus the
+   macOS-only key** (`terminal.integrated.defaultProfile.osx`). Add a
+   Windows-equivalent key (e.g.,
+   `terminal.integrated.defaultProfile.windows`).
+4. Do NOT copy the user-level `settings.json` from the old Mac; it
+   may contain local paths.
 
 ### Extensions
 
@@ -40,8 +47,6 @@ Per `configs/vscode/extensions.json`. Capture the installed list with:
 code --list-extensions > inventory/raw/vscode-extensions.txt
 ```
 
-Then compare against `extensions.json` to find drift.
-
 Install on Windows:
 
 ```bash
@@ -50,16 +55,21 @@ cat configs/vscode/extensions.json \
   | xargs -L1 code --install-extension
 ```
 
-## Secondary editors (if any)
+## Cursor (DETECTED, OPTIONAL)
 
-| Editor | Status |
-| --- | --- |
-| Cursor | add row when used |
-| JetBrains (GoLand / PyCharm / IntelliJ) | add row when used |
-| Neovim | add row when used |
-| Vim / Vi | already on macOS; on Windows: `winget install Neovim.Neovim` if needed |
+Detected in `/Applications`. Cursor is a personal fork of VS Code.
+Settings sync behavior is product-specific. Do NOT assume shared
+settings are mirrored to Cursor automatically.
 
-## Items NOT to migrate
+## Secondary editors
+
+| Editor | Status | Notes |
+| --- | --- | --- |
+| JetBrains (GoLand / PyCharm / IntelliJ) | [ABSENT] | not currently installed |
+| Neovim | [ABSENT] | not currently installed |
+| Vim / Vi | [DETECTED] | stock macOS |
+
+## What is NOT migrated
 
 - `~/Library/Application Support/Code/User/settings.json` from the Mac
   (may contain local paths or synced state)
