@@ -25,15 +25,20 @@ node_modules/
 
 # --------------------------------------------------
 # SSH — keys must NEVER be committed
+# Match by name pattern, not extension, to avoid catching unrelated .pub
+# files (e.g., VS Code workspace files that end in .code-workspace).
 # --------------------------------------------------
 *.pem
-*.key
-*.pub
-!configs/**/*.pub
-id_rsa*
-id_ed25519*
-id_ecdsa*
-id_dsa*
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+id_ecdsa
+id_ecdsa.*
+id_dsa
+id_dsa.*
+known_hosts
+authorized_keys
 
 # --------------------------------------------------
 # Cloud credentials
@@ -98,3 +103,9 @@ venv/
 # --------------------------------------------------
 inventory/raw/
 inventory/*.local.md
+
+# --------------------------------------------------
+# Per-platform Git overrides (symlinked as ~/.gitconfig.local)
+# --------------------------------------------------
+.gitconfig.local
+configs/git/.gitconfig.local
