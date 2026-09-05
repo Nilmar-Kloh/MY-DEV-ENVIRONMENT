@@ -1,0 +1,21 @@
+# Windows host (Git for Windows) — Git platform-specific overrides
+# Loaded via [include] path = ~/.gitconfig.local
+# Symlink (PowerShell):
+#   New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitconfig.local `
+#     -Target (Resolve-Path "$env:USERPROFILE\src\MY-DEV-ENVIRONMENT\configs\git\gitconfig.windows-host")
+
+[credential]
+  helper = manager
+
+[core]
+  # Git for Windows benefits from symlinks being honored. This requires
+  # Developer Mode on the Windows host.
+  symlinks = true
+
+[http]
+  # Git for Windows ships its own SSL certs. Leave sslCAInfo unset
+  # unless your employer provides a custom CA bundle.
+  sslCAInfo =
+
+[gpg]
+  format = ssh

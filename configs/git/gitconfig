@@ -1,9 +1,46 @@
-[user]
-  name = Nilmar Pontes
-  email = nilmarklohpontes@gmail.com
+# Shared Git configuration — behavior only.
+#
+# This file deliberately does NOT carry [user] identity. Identity
+# belongs in ~/.gitconfig (or ~/.gitconfig.local) so that:
+#
+#   - personal identity is set per machine, not duplicated in a public
+#     repo
+#   - corporate identity can be layered on top via includeIf without
+#     leaking into personal repositories
+#   - multiple identities on the same machine (personal, homelab,
+#     employer) don't cross-pollute
+#
+# Include chain:
+#
+#   ~/.gitconfig                    ← machine-local identity + any
+#                                     platform-specific tweaks
+#     │
+#     └── include → this file       (shared portable behavior)
+#           │
+#           └── include → ~/.gitconfig.local
+#                 │       ↑
+#                 │       symlink to one of:
+#                 │         configs/git/gitconfig.macos
+#                 │         configs/git/gitconfig.windows-host
+#                 │         configs/git/gitconfig.wsl
+#                 └── see docs/engineering/git.md for the bootstrap
+#                     procedure
+#
+# Optional future layering (employer-specific identity):
+#
+#   [includeIf "gitdir:~/src/company/"]
+#     path = ~/.gitconfig.company
+#
+# Do NOT add [user] here.
 
 [init]
   defaultBranch = main
+
+[include]
+  # Per-platform extension loaded after this file. If the path does
+  # not exist (or is unreadable), Git silently skips it — the shared
+  # config still works on its own.
+  path = ~/.gitconfig.local
 
 [pull]
   rebase = false

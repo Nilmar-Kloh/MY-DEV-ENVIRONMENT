@@ -1,0 +1,14 @@
+# macOS host — Git platform-specific overrides
+# Loaded via [include] path = ~/.gitconfig.local
+# Symlink: ln -sf ~/Code/MY-DEV-ENVIRONMENT/configs/git/gitconfig.macos ~/.gitconfig.local
+
+[credential]
+  helper = osxkeychain
+
+[gpg]
+  format = ssh
+
+# If you use commit signing, set the public-key path here. Keep the
+# private key off the committed config.
+[user]
+  signingkey = ~/.ssh/id_ed25519.pub

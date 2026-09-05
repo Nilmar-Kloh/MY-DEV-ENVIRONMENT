@@ -3,37 +3,142 @@
 ## Purpose
 
 Git is the universal version control tool. This document covers the
-configuration that is portable across platforms and the configuration that
-is platform-specific.
+shared (committed) configuration, the platform-specific (uncommitted)
+overrides, and the identity boundary that keeps personal and corporate
+Git usage from crossing.
 
-## What is committed
+## Identity boundary
 
-`configs/git/gitconfig` — the personal `.gitconfig`. Already in the repo.
+Git identity (`user.name`, `user.email`) is **never** committed to this
+repository. It lives in:
 
-Currently captures:
+- `~/.gitconfig` (machine-local), or
+- `~/.gitconfig.local` (a gitignored symlink managed per-machine)
 
-- `user.name` (public, fine)
-- `user.email` (public, fine)
+The shared `configs/git/gitconfig` defines **behavior only**: defaults,
+aliases, line-ending policy, gitignore, etc. Identity is added on top of
+behavior by whichever file Git loads first.
+
+Reason: this repository is public. Including identity would publish it,
+and including an "employer identity" inside a file shared across all
+workstations makes it impossible to prevent personal/corporate
+crossover. The structure below puts identity in files that are never
+committed.
+
+## Include chain
+
+```text
+~/.gitconfig                       ← machine-local: identity + per-host tweaks
+  │
+  └── include → configs/git/gitconfig   (shared portable behavior)
+        │
+        └── include → ~/.gitconfig.local
+              │
+              └── symlink target (one of):
+                    configs/git/gitconfig.macos
+                    configs/git/gitconfig.windows-host
+                    configs/git/gitconfig.wsl
+```
+
+Order of evaluation matters: Git reads the included content as if it
+were inlined at the position of the `[include]` directive. Because the
+shared `gitconfig` puts `[include]` after `[init]`/behavioral sections,
+local identity (`user.name`/`user.email` in `~/.gitconfig`) takes
+precedence over anything the shared file might set — but the shared
+file deliberately sets nothing for `[user]`, so there is no
+precedence fight.
+
+## What is in the shared config (`configs/git/gitconfig`)
+
+Behavioral only — no identity:
+
 - `init.defaultBranch = main`
 - `pull.rebase = false`
 - `push.autoSetupRemote = true`
 - `fetch.prune = true`
 - `core.editor = code --wait`
-- `core.autocrlf = input` (key for cross-platform line-ending safety)
+- `core.autocrlf = input`
 - `core.excludesfile = ~/.gitignore_global`
 - `color.ui = auto`
 - `rerere.enabled = true`
 - `rebase.autosquash = true`
 - aliases: `st`, `co`, `br`, `ci`, `lg`
+- `[include] path = ~/.gitconfig.local`
+
+## What is in each platform override
+
+| File | Scope | Adds |
+| --- | --- | --- |
+| `configs/git/gitconfig.macos` | macOS host | `credential.helper = osxkeychain`, `gpg.format = ssh`, optional `user.signingkey` |
+| `configs/git/gitconfig.windows-host` | Windows host (Git for Windows) | `credential.helper = manager`, `core.symlinks = true`, `gpg.format = ssh` |
+| `configs/git/gitconfig.wsl` | WSL2 | `credential.helper` (Windows-side GCM via `/mnt/c/...`) + `store`, explicit `core.autocrlf = input`, `gpg.format = ssh` |
+
+Each platform file is included only when `~/.gitconfig.local` is a
+symlink pointing at it. `~/.gitconfig.local` is **gitignored** — it is
+a per-machine symlink, never committed content.
+
+## Personal identity
+
+A typical `~/.gitconfig` for personal use:
+
+```ini
+[user]
+    name = <PERSONAL_NAME>
+    email = <PERSONAL_EMAIL>
+[include]
+    path = ~/Code/MY-DEV-ENVIRONMENT/configs/git/gitconfig
+```
+
+The `[user]` block sets identity. The `[include]` brings in shared
+behavior. The shared file's own `[include]` then loads the platform
+override (when `~/.gitconfig.local` exists).
+
+The Mac currently runs this exact pattern. The user identity and the
+repo identity were once both set in the shared file, which caused
+committed work on this Mac to be authored under the wrong name. The
+shared file no longer carries `[user]`.
+
+## Corporate identity (future)
+
+When a future employer provides Git repositories, separate identity via
+`includeIf`. The new employer's identity must NOT be committed to this
+public repo.
+
+Add to `~/.gitconfig.local` (or a new `~/.gitconfig.company`,
+gitignored):
+
+```ini
+[user]
+    name = <EMPLOYER_NAME>
+    email = <EMPLOYER_EMAIL>
+
+[includeIf "gitdir:~/src/company/"]
+    path = ~/.gitconfig.company
+```
+
+Conceptually:
+
+```text
+~/src/personal/    → personal identity (from ~/.gitconfig)
+~/src/homelab/     → personal identity (homelab repos are personal)
+~/src/company/     → employer identity (loaded only inside that tree)
+```
+
+Do NOT commit corporate identity, corporate paths, or any
+`includeIf`-bound corporate file to this repository.
 
 ## What is intentionally NOT committed
 
-- Signing keys (GPG / SSH)
+- Private SSH keys, GPG private keys, signing private keys
 - `credential.helper` values that include tokens
 - HTTPS remotes with embedded credentials
+- The contents of `~/.gitconfig.local` or any `includeIf`-bound file
+- Identity of any kind (`user.name`, `user.email`, `user.signingkey`)
 
-If signing is desired, the **public** key half may live in the repo under
-`configs/git/signing.pub`; the private key never does.
+If signing is desired, the **public** key path goes in a platform
+override (e.g., `user.signingkey = ~/.ssh/id_ed25519.pub`). The private
+key never does. Identity may be set in the platform override or in
+`~/.gitconfig` — both are local.
 
 ## Global gitignore
 
@@ -46,36 +151,37 @@ If signing is desired, the **public** key half may live in the repo under
 - `.env`, `.env.*`
 - Swap files
 
-This file is the same on every platform. Symlink it from WSL2 and from
-the Windows host if Git for Windows is used.
+Symlink it the same way on every platform.
 
 ## Cross-platform line endings
 
-`core.autocrlf = input` means:
+The shared config sets `core.autocrlf = input`: CRLF → LF on commit, no
+conversion on checkout. This is the correct setting for someone who
+primarily edits on Linux/macOS and occasionally checks out on Windows.
 
-- On commit: convert CRLF → LF.
-- On checkout: do not convert back.
+If a specific repo needs different behavior, set `.gitattributes` or a
+local `core.autocrlf` override there — not in the global config.
 
-This is the correct setting for any developer who primarily edits on
-Linux/macOS and occasionally checks out the repo on Windows. Anyone who
-primarily develops on Windows should switch to `core.autocrlf = true`
-in a per-repo override, or use `.gitattributes` to declare per-file
-behavior.
+## Symlinking the gitconfig + platform override
 
-## Symlinking the gitconfig
-
-### macOS / Linux
+### macOS
 
 ```bash
 ln -sf ~/Code/MY-DEV-ENVIRONMENT/configs/git/gitconfig ~/.gitconfig
 ln -sf ~/Code/MY-DEV-ENVIRONMENT/configs/git/gitignore_global ~/.gitignore_global
+ln -sf ~/Code/MY-DEV-ENVIRONMENT/configs/git/gitconfig.macos ~/.gitconfig.local
 ```
 
-### Windows (PowerShell, admin)
+### Windows host (PowerShell)
 
 ```powershell
-New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitconfig -Target (Resolve-Path "$env:USERPROFILE\src\MY-DEV-ENVIRONMENT\configs\git\gitconfig")
-New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitignore_global -Target (Resolve-Path "$env:USERPROFILE\src\MY-DEV-ENVIRONMENT\configs\git\gitignore_global")
+$repo = (Resolve-Path "$env:USERPROFILE\src\MY-DEV-ENVIRONMENT").Path
+New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitconfig `
+    -Target "$repo\configs\git\gitconfig"
+New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitignore_global `
+    -Target "$repo\configs\git\gitignore_global"
+New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitconfig.local `
+    -Target "$repo\configs\git\gitconfig.windows-host"
 ```
 
 ### WSL2
@@ -83,25 +189,39 @@ New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\.gitignore_global -Target
 ```bash
 ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/git/gitconfig ~/.gitconfig
 ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/git/gitignore_global ~/.gitignore_global
+ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/git/gitconfig.wsl ~/.gitconfig.local
 ```
 
 ## Windows Git vs WSL Git
 
 Two Git installations may exist on the new workstation:
 
-- Git for Windows (host)
-- Git inside WSL2
+- Git for Windows (host) → uses `gitconfig.windows-host`
+- Git inside WSL2 → uses `gitconfig.wsl`
 
-Use the one whose filesystem the repo lives on. A repo in `~/src/` (WSL2)
-must use WSL2 Git. A repo on `C:\src\` (Windows) must use Git for Windows.
-The `gitconfig` is the same in both environments, but credential helpers
-and remotes must be set up per environment.
+Use the Git whose filesystem the repo lives on:
 
-## Validation
+- Repo in `~/src/` (WSL2) → WSL2 Git + WSL2 platform override.
+- Repo on `C:\src\` (Windows) → Git for Windows + Windows-host
+  platform override.
+
+Identity is set in `~/.gitconfig` per machine and applies across both
+Git installations. Credential helpers, signing, and `core.symlinks`
+differ per environment — that is the point of the platform override.
+
+## Verification
+
+The following commands must be run on the live machine after symlinking
+the files. They confirm the include chain loads correctly without
+recursive expansion.
 
 ```bash
-git config --global user.name
-git config --global user.email
-git config --global init.defaultBranch
-git --version
+git config --show-origin --get user.name
+git config --show-origin --get user.email
+git config --show-origin --get credential.helper
+git config --show-origin --get core.autocrlf
+git config --show-origin --get alias.lg
+git config --list --show-origin 2>&1 | grep -i 'circular\|recursive\|warning'
 ```
+
+The last command must produce no output (no recursion warnings).

@@ -1,0 +1,19 @@
+# WSL2 — Git platform-specific overrides
+# Loaded via [include] path = ~/.gitconfig.local
+# Symlink (in WSL):
+#   ln -sf ~/src/MY-DEV-ENVIRONMENT/configs/git/gitconfig.wsl ~/.gitconfig.local
+
+[credential]
+  # Use the Windows-side Git Credential Manager so credentials entered
+  # in the Windows credential store are visible from WSL. GCM alone is
+  # sufficient; no `store` fallback (which would write plaintext
+  # ~/.git-credentials).
+  helper = /mnt/c/Program\\ Files/Git/mingw64/bin/git-credential-manager.exe
+
+[core]
+  # WSL file mode / line-ending behavior. `input` is consistent with
+  # the shared config; the explicit setting here documents the intent.
+  autocrlf = input
+
+[gpg]
+  format = ssh
